@@ -1,0 +1,39 @@
+import pandas as pd
+import re
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.ensemble import RandomForestClassifier
+
+df=pd.read_csv("d:/dataset/Restaurant_Reviews.txt",sep="\t") #give the path of your directory
+corpus=df.Review
+target=df.Liked
+
+engswds=list(ENGLISH_STOP_WORDS)
+engswds.remove("not")        #remove the "not" from stop words cos its imp word for review
+
+def cleaning(doc):
+    doc=doc.lower()
+    new_doc=re.sub("[^a-z]"," ",doc)
+    wordslist=new_doc.split()
+    new_doc=" "
+    for words in wordslist:
+        if words not in engswds:
+            new_doc=new_doc+words+" "
+    return new_doc.strip()
+
+corpus_new=(list(map(cleaning,corpus)))
+
+cv=CountVectorizer()
+X=cv.fit_transform(corpus).toarray()
+
+model=RandomForestClassifier()
+model.fit(X,target)
+
+r=input("Enter your review:")
+sample=cleaning(r)
+test=cv.transform([sample])
+review=model.predict_proba(test)
+if review[0][1]>.5:
+    print('You liked our food :-)')
+else:
+    print('You didnt like our food :-(')
